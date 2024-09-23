@@ -25,14 +25,22 @@ SOFTWARE.
 
 # Accelerate LAPACK #
 
-Since Mac OS X 13.3 Ventura, Apple's Accelerate framework comes with a new
+Since MacOS 13.3 Ventura, Apple's Accelerate framework comes with a new
 [BLAS/LAPACK
 interface](https://developer.apple.com/documentation/accelerate/blas) compatible
 with [Reference LAPACK
-v3.9.1](https://github.com/Reference-LAPACK/lapack/tree/v3.9.1). It also
+v3.9.1](https://github.com/Reference-LAPACK/lapack/releases/tag/v3.9.1). It also
 provides an ILP64 interface. On Apple Silicon M-processors, it utilises the
 [proprietary AMX co-processor](https://github.com/corsix/amx), which makes it
 especially interesting.
+
+**Update**: With the release of MacOS 15.0 Sequoia, Apple updated the Accelerate
+framework to be compatible with [Reference LAPACK
+v3.11.0](https://github.com/Reference-LAPACK/lapack/releases/tag/v3.11.0).
+Unfortunately, there is no mention of it in the [MacOS 15.0 Sequoia Release
+Notes](), but the note in the [Accelerate BLAS
+docs](https://developer.apple.com/documentation/accelerate/blas) has been
+updated accordingly.
 
 These new interfaces are hidden behind the preprocessor defines
 `ACCELERATE_NEW_LAPACK` and `ACCELERATE_LAPACK_ILP64` and they only work, if you
@@ -165,9 +173,9 @@ include(FetchContent)
 FetchContent_Declare(
     AccelerateLAPACK
     GIT_REPOSITORY "https://github.com/lepus2589/accelerate-lapack.git"
-    GIT_TAG v1.0.0
+    GIT_TAG v1.1.0
     SYSTEM
-    FIND_PACKAGE_ARGS 1.0.0 CONFIG NAMES AccelerateLAPACK
+    FIND_PACKAGE_ARGS 1.1.0 CONFIG NAMES AccelerateLAPACK
 )
 set(AccelerateLAPACK_INCLUDE_PACKAGING TRUE)
 FetchContent_MakeAvailable(AccelerateLAPACK)
