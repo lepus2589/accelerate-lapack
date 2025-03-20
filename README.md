@@ -126,42 +126,26 @@ via Homebrew or MacPorts):
 
 - CMake
 
-### Configuration with CMake ###
+### Workflow with CMake ###
 
 Use the `accelerate-lapack32` preset (or the `accelerate-lapack64` preset for
 the ILP64 interface) with CMake:
 
 ```shell
-$ cmake --preset accelerate-lapack32
+$ cmake --workflow --preset accelerate-lapack32
 ```
 
 This will configure Accelerate LAPACK to be installed in your `~/.local`
 directory by default. If you prefer a different install location (e.&nbsp;g.
-`/opt/custom`), you can change it like this:
+`/opt/custom`), you can change it using a `CMakeUserPresets.json` file, for
+which a template file is provided:
 
 ```shell
-$ cmake --preset accelerate-lapack32 -D "CMAKE_INSTALL_PREFIX=/opt/custom"
+$ cmake --workflow --preset user-accelerate-lapack32
 ```
 
 I wouldn't recommend installing to `/usr/local` (used by Homebrew on Intel Macs)
 or `/opt/local` (used by MacPorts).
-
-### Build and install ###
-
-When the configuration finished successfully (fingers crossed), you can build with the
-same preset name (`accelerate-lapack32` or `accelerate-lapack64`):
-
-```shell
-$ cmake --build --preset accelerate-lapack32 --verbose
-```
-
-If everything worked as intended, linking the library should be successful. Now,
-you can install to the previously configured install prefix by building the
-install target:
-
-```shell
-$ cmake --build --preset accelerate-lapack32 --verbose --target install
-```
 
 ### Using Accelerate LAPACK in another project ###
 

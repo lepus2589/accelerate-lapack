@@ -1,8 +1,8 @@
 {
-  "version": 2,
+  "version": 6,
   "cmakeMinimumRequired": {
     "major": 3,
-    "minor": 20,
+    "minor": 25,
     "patch": 0
   },
   "configurePresets": [
@@ -46,14 +46,61 @@
   ],
   "buildPresets": [
     {
+      "name": "verbose",
+      "hidden": true,
+      "verbose": true
+    },
+    {
       "name": "accelerate-lapack32",
-      "displayName": "LAPACK 32bit build linking against Accelerate",
-      "configurePreset": "accelerate-lapack32"
+      "inherits": [
+        "verbose"
+      ],
+      "displayName": "LAPACK 32bit build linking against Accelerate and installation",
+      "configurePreset": "accelerate-lapack32",
+      "targets": [
+        "install"
+      ]
     },
     {
       "name": "accelerate-lapack64",
-      "displayName": "LAPACK 64bit build linking against Accelerate ILP64 interface",
-      "configurePreset": "accelerate-lapack64"
+      "inherits": [
+        "verbose"
+      ],
+      "displayName": "LAPACK 64bit build linking against Accelerate ILP64 interface and installation",
+      "configurePreset": "accelerate-lapack64",
+      "targets": [
+        "install"
+      ]
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "accelerate-lapack32",
+      "displayName": "LAPACK 32bit build linking against Accelerate and installation",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "accelerate-lapack32"
+        },
+        {
+          "type": "build",
+          "name": "accelerate-lapack32"
+        }
+      ]
+    },
+    {
+      "name": "accelerate-lapack64",
+      "displayName": "LAPACK 64bit build linking against Accelerate ILP64 interface and installation",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "accelerate-lapack64"
+        },
+        {
+          "type": "build",
+          "name": "accelerate-lapack64"
+        }
+      ]
     }
   ]
 }

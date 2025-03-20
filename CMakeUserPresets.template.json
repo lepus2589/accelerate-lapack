@@ -1,0 +1,76 @@
+{
+  "version": 6,
+  "include": [
+    "./CMakePresets.json"
+  ],
+  "configurePresets": [
+    {
+      "name": "user-accelerate-lapack32",
+      "inherits": [
+        "accelerate-lapack32"
+      ],
+      "cacheVariables": {
+        "CMAKE_INSTALL_PREFIX": "/opt/custom"
+      },
+      "displayName": "User LAPACK 32bit configuration linking against Accelerate"
+    },
+    {
+      "name": "user-accelerate-lapack64",
+      "inherits": [
+        "accelerate-lapack64"
+      ],
+      "cacheVariables": {
+        "CMAKE_INSTALL_PREFIX": "/opt/custom"
+      },
+      "displayName": "User LAPACK 64bit configuration linking against Accelerate ILP64 interface"
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "user-accelerate-lapack32",
+      "inherits": [
+        "accelerate-lapack32"
+      ],
+      "displayName": "User LAPACK 32bit build linking against Accelerate and installation",
+      "configurePreset": "user-accelerate-lapack32"
+    },
+    {
+      "name": "user-accelerate-lapack64",
+      "inherits": [
+        "accelerate-lapack64"
+      ],
+      "displayName": "User LAPACK 64bit build linking against Accelerate ILP64 interface and installation",
+      "configurePreset": "user-accelerate-lapack64"
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "user-accelerate-lapack32",
+      "displayName": "User LAPACK 32bit build linking against Accelerate and installation",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "user-accelerate-lapack32"
+        },
+        {
+          "type": "build",
+          "name": "user-accelerate-lapack32"
+        }
+      ]
+    },
+    {
+      "name": "user-accelerate-lapack64",
+      "displayName": "User LAPACK 64bit build linking against Accelerate ILP64 interface and installation",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "user-accelerate-lapack64"
+        },
+        {
+          "type": "build",
+          "name": "user-accelerate-lapack64"
+        }
+      ]
+    }
+  ]
+}
