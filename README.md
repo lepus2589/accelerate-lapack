@@ -26,25 +26,26 @@ SOFTWARE.
 # Accelerate LAPACK #
 
 Since MacOS 13.3 Ventura, Apple's Accelerate framework comes with a new
-[BLAS/LAPACK
-interface](https://developer.apple.com/documentation/accelerate/blas) compatible
-with [Reference LAPACK
-v3.9.1](https://github.com/Reference-LAPACK/lapack/releases/tag/v3.9.1). It also
-provides an ILP64 interface. On Apple Silicon M-processors, it utilises the
-[proprietary AMX co-processor](https://github.com/corsix/amx), which makes it
-especially interesting.
+[BLAS/LAPACK interface][accelerate-docs] compatible with [Reference LAPACK
+v3.9.1][lapack-v3.9.1]. It also provides an ILP64 interface. On Apple Silicon
+M-processors, it utilises the [proprietary AMX co-processor][apple-amx], which
+makes it especially interesting.
 
 **Update**: With the release of MacOS 15.0 Sequoia, Apple updated the Accelerate
-framework to be compatible with [Reference LAPACK
-v3.11.0](https://github.com/Reference-LAPACK/lapack/releases/tag/v3.11.0).
+framework to be compatible with [Reference LAPACK v3.11.0][lapack-v3.11.0].
 Unfortunately, there is no mention of it in the [MacOS 15.0 Sequoia Release
-Notes](), but the note in the [Accelerate BLAS
-docs](https://developer.apple.com/documentation/accelerate/blas) has been
-updated accordingly.
+Notes][macos15-release-notes], but the note in the [Accelerate BLAS
+docs][accelerate-docs] has been updated accordingly.
 
 These new interfaces are hidden behind the preprocessor defines
 `ACCELERATE_NEW_LAPACK` and `ACCELERATE_LAPACK_ILP64` and they only work, if you
 include the Accelerate C/C++ headers.
+
+[accelerate-docs]: https://developer.apple.com/documentation/accelerate/blas-library
+[apple-amx]: https://github.com/corsix/amx
+[lapack-v3.9.1]: https://github.com/Reference-LAPACK/lapack/releases/tag/v3.9.1
+[lapack-v3.11.0]: https://github.com/Reference-LAPACK/lapack/releases/tag/v3.11.0
+[macos15-release-notes]: https://developer.apple.com/documentation/macos-release-notes/macos-15-release-notes
 
 ## The Problem ##
 
@@ -57,12 +58,11 @@ the linker, when linking any program or library that uses the standard
 BLAS/LAPACK API.
 
 Take, for example, the `dgeqrt` LAPACK routine, that is used by the [Reference
-LAPACK CMake
-script](https://github.com/Reference-LAPACK/lapack/blob/v3.9.1/CMakeLists.txt#L315-L316)
-to determine, if the user provided LAPACK version is recent enough. When the
-Fortran test executable is compiled, the `gfortran` compiler creates a function
-call with the binary symbol `_dgeqrt_`, which results in the following error
-when linking to Accelerate (`ld` is the Apple system linker, here):
+LAPACK CMake script][dgeqrt-ref] to determine, if the user provided LAPACK
+version is recent enough. When the Fortran test executable is compiled, the
+`gfortran` compiler creates a function call with the binary symbol `_dgeqrt_`,
+which results in the following error when linking to Accelerate (`ld` is the
+Apple system linker, here):
 
 ```plaintext
 ld: Undefined symbols:
@@ -73,6 +73,8 @@ ld: Undefined symbols:
 The reason for this is, that the binary symbol provided by the Accelerate
 framework is called `_dgeqrt$NEWLAPACK`, literally. This is a symbol, that no
 Fortran compiler will probably ever emit voluntarily. So, what to do?
+
+[dgeqrt-ref]: https://github.com/Reference-LAPACK/lapack/blob/v3.11.0/CMakeLists.txt#L365-L366
 
 ## The Solution ##
 
@@ -157,9 +159,9 @@ include(FetchContent)
 FetchContent_Declare(
     AccelerateLAPACK
     GIT_REPOSITORY "https://github.com/lepus2589/accelerate-lapack.git"
-    GIT_TAG v1.2.0
+    GIT_TAG v1.3.0
     SYSTEM
-    FIND_PACKAGE_ARGS 1.2.0 CONFIG NAMES AccelerateLAPACK
+    FIND_PACKAGE_ARGS 1.3.0 CONFIG NAMES AccelerateLAPACK
 )
 set(AccelerateLAPACK_INCLUDE_PACKAGING TRUE)
 FetchContent_MakeAvailable(AccelerateLAPACK)

@@ -7,12 +7,16 @@
   },
   "configurePresets": [
     {
-      "name": "base",
+      "name": "install",
       "hidden": true,
-      "binaryDir": "${sourceDir}/build",
       "cacheVariables": {
         "CMAKE_INSTALL_PREFIX": "$env{HOME}/.local"
       }
+    },
+    {
+      "name": "make",
+      "hidden": true,
+      "generator": "Unix Makefiles"
     },
     {
       "name": "ninja",
@@ -22,8 +26,7 @@
     {
       "name": "accelerate-lapack32",
       "inherits": [
-        "base",
-        "ninja"
+        "install"
       ],
       "binaryDir": "${sourceDir}/build/32",
       "cacheVariables": {
@@ -34,8 +37,7 @@
     {
       "name": "accelerate-lapack64",
       "inherits": [
-        "base",
-        "ninja"
+        "install"
       ],
       "binaryDir": "${sourceDir}/build/64",
       "cacheVariables": {
@@ -51,26 +53,29 @@
       "verbose": true
     },
     {
-      "name": "accelerate-lapack32",
-      "inherits": [
-        "verbose"
-      ],
-      "displayName": "LAPACK 32bit build linking against Accelerate and installation",
-      "configurePreset": "accelerate-lapack32",
+      "name": "install",
+      "hidden": true,
       "targets": [
         "install"
       ]
     },
     {
+      "name": "accelerate-lapack32",
+      "inherits": [
+        "verbose",
+        "install"
+      ],
+      "displayName": "LAPACK 32bit build linking against Accelerate and installation",
+      "configurePreset": "accelerate-lapack32"
+    },
+    {
       "name": "accelerate-lapack64",
       "inherits": [
-        "verbose"
+        "verbose",
+        "install"
       ],
       "displayName": "LAPACK 64bit build linking against Accelerate ILP64 interface and installation",
-      "configurePreset": "accelerate-lapack64",
-      "targets": [
-        "install"
-      ]
+      "configurePreset": "accelerate-lapack64"
     }
   ],
   "workflowPresets": [
