@@ -47,6 +47,15 @@ include the Accelerate C/C++ headers.
 [lapack-v3.11.0]: https://github.com/Reference-LAPACK/lapack/releases/tag/v3.11.0
 [macos15-release-notes]: https://developer.apple.com/documentation/macos-release-notes/macos-15-release-notes
 
+- [The Problem](#the-problem)
+- [The Solution](#the-solution)
+  - [The alias files (to use in other projects)](#the-alias-files-to-use-in-other-projects)
+- [How to compile](#how-to-compile)
+  - [Prerequisites](#prerequisites)
+  - [Workflow with CMake](#workflow-with-cmake)
+    - [CMake v4 compatibility](#cmake-v4-compatibility)
+  - [Using Accelerate LAPACK in another project](#using-accelerate-lapack-in-another-project)
+
 ## The Problem ##
 
 But what if you have to or just want to link against the Accelerate framework
@@ -148,6 +157,13 @@ $ cmake --workflow --preset user-accelerate-lapack32
 
 I wouldn't recommend installing to `/usr/local` (used by Homebrew on Intel Macs)
 or `/opt/local` (used by MacPorts).
+
+#### CMake v4 compatibility ####
+
+To build the project with CMake v4 or higher, there is a `cmake4` preset, that
+you can use in your `CMakeUserPresets.json`. Both `user-accelerate-lapack32` and
+`user-accelerate-lapack64` should additionally inherit from `cmake4`. This is
+not included by default.
 
 ### Using Accelerate LAPACK in another project ###
 
