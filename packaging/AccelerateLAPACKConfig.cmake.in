@@ -27,25 +27,36 @@ SOFTWARE.
 
 cmake_minimum_required(VERSION @CMAKE_MINIMUM_REQUIRED_VERSION@...@CMAKE_MAXIMUM_SUPPORTED_VERSION@)
 
-include(CMakeFindDependencyMacro)
+include("@PACKAGE_AccelerateLAPACK_INSTALL_CMAKEDIR@/NewBLAS_Targets.cmake")
+include("@PACKAGE_AccelerateLAPACK_INSTALL_CMAKEDIR@/NewLAPACK_Targets.cmake")
 
-set(BLA_VENDOR "Apple")
-find_dependency(LAPACK MODULE)
+set_target_properties(
+    BLAS::NEW_BLAS
+    LAPACK::NEW_LAPACK
+    PROPERTIES
+    VERSION "@ACCELERATE_LAPACK_ILAVER_VERSION@"
+)
 
-set(ACCELERATE_NEW_LAPACK_VERSION "@ACCELERATE_NEW_LAPACK_VERSION@")
+set_target_properties(
+    BLAS::NEW_BLAS64
+    LAPACK::NEW_LAPACK64
+    PROPERTIES
+    VERSION "@ACCELERATE_LAPACK_ILAVER64_VERSION@"
+)
 
-set(BLAS32_LINKER_FLAGS "-Wl,-alias_list,@PACKAGE_AccelerateLAPACK_INSTALL_CMAKEDIR@/new-lapack.alias")
-set(LAPACK32_LINKER_FLAGS "-Wl,-alias_list,@PACKAGE_AccelerateLAPACK_INSTALL_CMAKEDIR@/new-lapack.alias")
+# These targets are imported targets, no matter if you import the project via
+# add_subdirectory() or find_package(). They can be used for try_compile()
+add_library(BLAS::NEW_BLAS_IMPORTED ALIAS BLAS::NEW_BLAS)
+add_library(BLAS::NEW_BLAS64_IMPORTED ALIAS BLAS::NEW_BLAS64)
+add_library(LAPACK::NEW_LAPACK_IMPORTED ALIAS LAPACK::NEW_LAPACK)
+add_library(LAPACK::NEW_LAPACK64_IMPORTED ALIAS LAPACK::NEW_LAPACK64)
 
 if (BUILD_INDEX64)
-    list(APPEND BLAS_LINKER_FLAGS "-Wl,-alias_list,@PACKAGE_AccelerateLAPACK_INSTALL_CMAKEDIR@/new-lapack-ilp64.alias")
-    list(APPEND LAPACK_LINKER_FLAGS "-Wl,-alias_list,@PACKAGE_AccelerateLAPACK_INSTALL_CMAKEDIR@/new-lapack-ilp64.alias")
+    add_library(BLAS::BLAS ALIAS BLAS::NEW_BLAS64)
+    add_library(LAPACK::LAPACK ALIAS LAPACK::NEW_LAPACK64)
 else ()
-    list(APPEND BLAS_LINKER_FLAGS "-Wl,-alias_list,@PACKAGE_AccelerateLAPACK_INSTALL_CMAKEDIR@/new-lapack.alias")
-    list(APPEND LAPACK_LINKER_FLAGS "-Wl,-alias_list,@PACKAGE_AccelerateLAPACK_INSTALL_CMAKEDIR@/new-lapack.alias")
+    add_library(BLAS::BLAS ALIAS BLAS::NEW_BLAS)
+    add_library(LAPACK::LAPACK ALIAS LAPACK::NEW_LAPACK)
 endif ()
-
-set_target_properties(BLAS::BLAS PROPERTIES INTERFACE_LINK_OPTIONS "${BLAS_LINKER_FLAGS}")
-set_target_properties(LAPACK::LAPACK PROPERTIES INTERFACE_LINK_OPTIONS "${LAPACK_LINKER_FLAGS}")
 
 check_required_components(AccelerateLAPACK)
