@@ -31,7 +31,63 @@ if (NOT DEFINED AccelerateLAPACK_INSTALL_CMAKEDIR)
         AccelerateLAPACK_INSTALL_CMAKEDIR
         "${CMAKE_INSTALL_DATAROOTDIR}/cmake/${PROJECT_NAME}-${PROJECT_VERSION}"
     )
+    set(
+        AccelerateLAPACK_FULL_INSTALL_CMAKEDIR
+        "${CMAKE_INSTALL_FULL_DATAROOTDIR}/cmake/${PROJECT_NAME}-${PROJECT_VERSION}"
+    )
 endif ()
+
+# Add the $NEWLAPACK symbols to the linker flags of the NEW_BLAS and NEW_LAPACK
+# targets
+target_link_options(
+    NEW_BLAS
+    INTERFACE
+    ${BLAS_LINKER_FLAGS}
+    "$<INSTALL_INTERFACE:LINKER:-alias_list,${AccelerateLAPACK_FULL_INSTALL_CMAKEDIR}/new-blas.alias>"
+)
+target_link_options(
+    NEW_LAPACK
+    INTERFACE
+    ${LAPACK_LINKER_FLAGS}
+    "$<INSTALL_INTERFACE:LINKER:-alias_list,${AccelerateLAPACK_FULL_INSTALL_CMAKEDIR}/new-lapack.alias>"
+)
+
+# Add the $NEWLAPACK$ILP64 symbols to the linker flags of the NEW_BLAS64 and
+# NEW_LAPACK64 targets
+target_link_options(
+    NEW_BLAS64
+    INTERFACE
+    ${BLAS_LINKER_FLAGS}
+    "$<INSTALL_INTERFACE:LINKER:-alias_list,${AccelerateLAPACK_FULL_INSTALL_CMAKEDIR}/new-blas-ilp64.alias>"
+)
+target_link_options(
+    NEW_LAPACK64
+    INTERFACE
+    ${LAPACK_LINKER_FLAGS}
+    "$<INSTALL_INTERFACE:LINKER:-alias_list,${AccelerateLAPACK_FULL_INSTALL_CMAKEDIR}/new-lapack-ilp64.alias>"
+)
+
+install(
+    TARGETS NEW_BLAS NEW_BLAS64
+    EXPORT NewBLAS_Targets
+)
+
+install(
+    EXPORT NewBLAS_Targets
+    DESTINATION "${AccelerateLAPACK_INSTALL_CMAKEDIR}"
+    NAMESPACE BLAS::
+)
+
+install(
+    TARGETS NEW_LAPACK NEW_LAPACK64
+    EXPORT NewLAPACK_Targets
+)
+
+install(
+    EXPORT NewLAPACK_Targets
+    DESTINATION "${AccelerateLAPACK_INSTALL_CMAKEDIR}"
+    NAMESPACE LAPACK::
+)
 
 install(
     FILES
@@ -56,6 +112,8 @@ install(
     FILES
     "${CMAKE_CURRENT_BINARY_DIR}/AccelerateLAPACKConfigVersion.cmake"
     "${CMAKE_CURRENT_BINARY_DIR}/AccelerateLAPACKConfig.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/../src/new-blas.alias"
+    "${CMAKE_CURRENT_BINARY_DIR}/../src/new-blas-ilp64.alias"
     "${CMAKE_CURRENT_BINARY_DIR}/../src/new-lapack.alias"
     "${CMAKE_CURRENT_BINARY_DIR}/../src/new-lapack-ilp64.alias"
     DESTINATION "${AccelerateLAPACK_INSTALL_CMAKEDIR}"

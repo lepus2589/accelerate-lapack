@@ -27,7 +27,8 @@ SOFTWARE.
 
 Since MacOS 13.3 Ventura, Apple's Accelerate framework comes with a new
 [BLAS/LAPACK interface][accelerate-docs] compatible with [Reference LAPACK
-v3.9.1][lapack-v3.9.1]. It also provides an ILP64 interface. On Apple Silicon
+v3.9.1][lapack-v3.9.1] in addition to the quite outdated [Reference LAPACK
+v3.2.1][lapack-v3.2.1]. It also provides an ILP64 interface. On Apple Silicon
 M-processors, it utilises the [proprietary AMX co-processor][apple-amx], which
 makes it especially interesting.
 
@@ -43,6 +44,7 @@ include the Accelerate C/C++ headers.
 
 [accelerate-docs]: https://developer.apple.com/documentation/accelerate/blas-library
 [apple-amx]: https://github.com/corsix/amx
+[lapack-v3.2.1]: https://netlib.org/lapack/#_lapack_version_3_2_1
 [lapack-v3.9.1]: https://github.com/Reference-LAPACK/lapack/releases/tag/v3.9.1
 [lapack-v3.11.0]: https://github.com/Reference-LAPACK/lapack/releases/tag/v3.11.0
 [macos15-release-notes]: https://developer.apple.com/documentation/macos-release-notes/macos-15-release-notes
@@ -101,9 +103,8 @@ parses the symbols listed in the BLAS and LAPACK text-based `.dylib` stubs. For
 every symbol that ends in `$NEWLAPACK` (or `$NEWLAPACK$ILP64` for the ILP64
 interface), an alias is added to the alias file.
 
-The linker option is injected into the BLAS::BLAS and LAPACK::LAPACK targets.
-This way, dependent projects can just use the well known BLAS/LAPACK targets for
-linking against the new LAPACK interface.
+The additional linker options get attached to new interface library targets,
+which are in turn attached to the BLAS::BLAS and LAPACK::LAPACK targets.
 
 ### The alias files (to use in other projects) ###
 
@@ -111,6 +112,8 @@ After the CMake configuration, the alias files can be found in `./build/<32|64>/
 
 ```plaintext
 ./build/<32|64>/src
+├── new-blas-ilp64.alias
+├── new-blas.alias
 ├── new-lapack-ilp64.alias
 └── new-lapack.alias
 ```
@@ -125,7 +128,7 @@ other compilers installed on your system, make sure CMake finds the correct one.
 Otherwise, help CMake by setting the environment variable `$ export
 CC=/usr/bin/cc` in your terminal window.
 
-It is also recommended to use at least CMake v3.20 with presets, but the CMake
+It is also recommended to use at least CMake v3.25 with presets, but the CMake
 script also works down to CMake v3.12, if you set the required variables on the
 command line.
 
@@ -160,9 +163,10 @@ or `/opt/local` (used by MacPorts).
 
 #### CMake v4 compatibility ####
 
-To build the project with CMake v4 or higher, there is a `cmake4` preset, that
-you can use in your `CMakeUserPresets.json`. Both `user-accelerate-lapack32` and
-`user-accelerate-lapack64` should additionally inherit from `cmake4`. This is
+To build the project with CMake v4 or higher, you must explicitly provide the
+`CMAKE_OSX_SYSROOT` variable in your `CMakeUserPresets.json`. Both the
+`user-accelerate-lapack32` and `user-accelerate-lapack64` presets should
+additionally have the cache variable `"CMAKE_OSX_SYSROOT": "macosx"`. This is
 not included by default.
 
 ### Using Accelerate LAPACK in another project ###
