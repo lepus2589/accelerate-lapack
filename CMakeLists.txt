@@ -41,16 +41,22 @@ if (CMAKE_HOST_SYSTEM_NAME MATCHES "Darwin")
     # The available binary Accelerate version is determined by the MacOS system
     message(STATUS "The Darwin kernel version is: ${CMAKE_HOST_SYSTEM_VERSION}")
 
-    if (CMAKE_HOST_SYSTEM_VERSION VERSION_GREATER_EQUAL 24.0)
+    if (CMAKE_HOST_SYSTEM_VERSION VERSION_GREATER_EQUAL 24.5)
+        # Mac OS X 15.5 Sequoia or later
+        message(STATUS "The MacOS version is: >=15.5")
+        set(MINIMUM_MACOS_SDK_VERSION 15.5)
+        set(ACCELERATE_NEW_LAPACK_VERSION 3.12.0)
+    elseif (CMAKE_HOST_SYSTEM_VERSION VERSION_GREATER_EQUAL 24.0)
         # Mac OS X 15.0 Sequoia or later
-        message(STATUS "The MacOS version is: >=15.0")
+        message(STATUS "The MacOS version is: >=15.0,<15.5")
         set(MINIMUM_MACOS_SDK_VERSION 15.0)
+        set(VALID_MACOS_SDK_VERSIONS 15.4 15.2 15.1 ${MINIMUM_MACOS_SDK_VERSION})
         set(ACCELERATE_NEW_LAPACK_VERSION 3.11.0)
     elseif (CMAKE_HOST_SYSTEM_VERSION VERSION_GREATER_EQUAL 22.4)
         # Mac OS X 13.3 Ventura or later
         message(STATUS "The MacOS version is: >=13.3,<15.0")
         set(MINIMUM_MACOS_SDK_VERSION 13.3)
-        set(VALID_MACOS_SDK_VERSIONS 14.5 14.4 14.2 14.0 13.3)
+        set(VALID_MACOS_SDK_VERSIONS 14.5 14.4 14.2 14.0 ${MINIMUM_MACOS_SDK_VERSION})
         set(ACCELERATE_NEW_LAPACK_VERSION 3.9.1)
     else ()
         # Before Mac OS X 13.3 Ventura

@@ -38,6 +38,13 @@ Unfortunately, there is no mention of it in the [MacOS 15.0 Sequoia Release
 Notes][macos15-release-notes], but the note in the [Accelerate BLAS
 docs][accelerate-docs] has been updated accordingly.
 
+**Update2**: With the release of MacOS 15.5 Sequoia, Apple updated the
+Accelerate framework to be compatible with [Reference LAPACK
+v3.12.0][lapack-v3.12.0]. Unfortunately, there is no mention of it in the [MacOS
+15.5 Sequoia Release Notes][macos15.5-release-notes], but the note in the
+[Accelerate BLAS docs][accelerate-docs] has been updated accordingly, even
+though it erroneously says, v3.12.0 will be supported with MacOS 16.
+
 These new interfaces are hidden behind the preprocessor defines
 `ACCELERATE_NEW_LAPACK` and `ACCELERATE_LAPACK_ILP64` and they only work, if you
 include the Accelerate C/C++ headers.
@@ -47,7 +54,9 @@ include the Accelerate C/C++ headers.
 [lapack-v3.2.1]: https://netlib.org/lapack/#_lapack_version_3_2_1
 [lapack-v3.9.1]: https://github.com/Reference-LAPACK/lapack/releases/tag/v3.9.1
 [lapack-v3.11.0]: https://github.com/Reference-LAPACK/lapack/releases/tag/v3.11.0
+[lapack-v3.12.0]: https://github.com/Reference-LAPACK/lapack/releases/tag/v3.12.0
 [macos15-release-notes]: https://developer.apple.com/documentation/macos-release-notes/macos-15-release-notes
+[macos15.5-release-notes]: https://developer.apple.com/documentation/macos-release-notes/macos-15_5-release-notes
 
 - [The Problem](#the-problem)
 - [The Solution](#the-solution)
@@ -85,7 +94,7 @@ The reason for this is, that the binary symbol provided by the Accelerate
 framework is called `_dgeqrt$NEWLAPACK`, literally. This is a symbol, that no
 Fortran compiler will probably ever emit voluntarily. So, what to do?
 
-[dgeqrt-ref]: https://github.com/Reference-LAPACK/lapack/blob/v3.11.0/CMakeLists.txt#L365-L366
+[dgeqrt-ref]: https://github.com/Reference-LAPACK/lapack/blob/v3.12.0/CMakeLists.txt#L295-L296
 
 ## The Solution ##
 
