@@ -149,10 +149,66 @@ via Homebrew or MacPorts):
 
 - CMake
 
+### MaxOS SDK Selection ###
+
+To build the project you must provide the [`CMAKE_OSX_SYSROOT`][macos_sdk]
+variable. Prior to CMake v4, this was computed automatically, if empty. Since
+CMake v4, this is empty by default and won't be populated automatically.
+
+In any case, it is **strongly recommended** to explicitly select a matching SDK
+for your MacOS system. Matching in this case means, that the Accelerate
+framework's API in the SDK must match the Accelerate framework's binary in the
+MacOS system. The API in the SDK could either be too old (if you upgraded your
+system but didn't update your XCode/Command Line Tools yet) or too recent (if
+you're on an older system but installed the latest XCode/Command Line Tools). In
+both cases, you risk errors, so the build script checks and prevents this.
+
+It's recommended to provide the `CMAKE_OSX_SYSROOT` via the `SDKROOT`
+environment variable, which in turn can be provided by MacOS tooling (`xcrun`).
+If you start `cmake` via `xcrun`, `xcrun` will provide the currently selected
+SDK in the `SDKROOT` environment variable to `cmake` (`macosx` selects the
+latest `macosx` SDK in the active developer directory):
+
+```shell
+$ xcrun --sdk macosx cmake ...
+```
+
+To check, which SDK this is, use:
+
+```shell
+$ xcrun --sdk macosx --show-sdk-path
+```
+
+If the build fails due to a mismatch between SDK and MacOS system, check your
+available SDKs in the active developer directory with
+
+```shell
+$ xcodebuild -showsdks
+```
+
+and use a different SDK version `macosx<XX.X>`. If the SDK version you're
+looking for can't be found in the active developer directory, change it using
+
+```shell
+$ xcode-select --switch <path>
+```
+
+This way, you can switch between `/Applications/Xcode.app/Contents/Developer`
+and `/Library/Developer/CommandLineTools`, for example, or between different
+XCode versions.
+
+Alternatively, you can directly provide the `CMAKE_OSX_SYSROOT` cache variable
+in your `CMakeUserPresets.json`. Both the `user-accelerate-lapack32` and
+`user-accelerate-lapack64` presets should additionally have the cache variable
+`"CMAKE_OSX_SYSROOT": "macosx"` or `"CMAKE_OSX_SYSROOT": "<path>"`.
+
+[macos_sdk]: https://cmake.org/cmake/help/latest/variable/CMAKE_OSX_SYSROOT.html
+
 ### Workflow with CMake ###
 
 Use the `accelerate-lapack32` preset (or the `accelerate-lapack64` preset for
-the ILP64 interface) with CMake:
+the ILP64 interface) with CMake (prefix all of the following commands with
+`xcrun`, see above):
 
 ```shell
 $ cmake --workflow --preset accelerate-lapack32
@@ -170,14 +226,6 @@ $ cmake --workflow --preset user-accelerate-lapack32
 I wouldn't recommend installing to `/usr/local` (used by Homebrew on Intel Macs)
 or `/opt/local` (used by MacPorts).
 
-#### CMake v4 compatibility ####
-
-To build the project with CMake v4 or higher, you must explicitly provide the
-`CMAKE_OSX_SYSROOT` variable in your `CMakeUserPresets.json`. Both the
-`user-accelerate-lapack32` and `user-accelerate-lapack64` presets should
-additionally have the cache variable `"CMAKE_OSX_SYSROOT": "macosx"`. This is
-not included by default.
-
 ### Using Accelerate LAPACK in another project ###
 
 You can use Accelerate LAPACK in other projects like this:
@@ -188,9 +236,9 @@ include(FetchContent)
 FetchContent_Declare(
     AccelerateLAPACK
     GIT_REPOSITORY "https://github.com/lepus2589/accelerate-lapack.git"
-    GIT_TAG v1.5.0
+    GIT_TAG v1.6.0
     SYSTEM
-    FIND_PACKAGE_ARGS 1.5.0 CONFIG NAMES AccelerateLAPACK
+    FIND_PACKAGE_ARGS 1.6.0 CONFIG NAMES AccelerateLAPACK
 )
 set(AccelerateLAPACK_INCLUDE_PACKAGING TRUE)
 FetchContent_MakeAvailable(AccelerateLAPACK)

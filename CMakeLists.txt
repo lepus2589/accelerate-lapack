@@ -27,7 +27,7 @@ set(CMAKE_MAXIMUM_SUPPORTED_VERSION 4.0)
 
 cmake_minimum_required(VERSION 3.12...${CMAKE_MAXIMUM_SUPPORTED_VERSION})
 
-project(AccelerateLAPACK VERSION 1.5.0 LANGUAGES C)
+project(AccelerateLAPACK VERSION 1.6.0 LANGUAGES C)
 
 string(COMPARE EQUAL "${CMAKE_PROJECT_NAME}" "${PROJECT_NAME}" IS_TOP_LEVEL)
 
@@ -50,13 +50,13 @@ if (CMAKE_HOST_SYSTEM_NAME MATCHES "Darwin")
         # Mac OS X 15.0 Sequoia or later
         message(STATUS "The MacOS version is: >=15.0,<15.5")
         set(MINIMUM_MACOS_SDK_VERSION 15.0)
-        set(VALID_MACOS_SDK_VERSIONS 15.4 15.2 15.1 ${MINIMUM_MACOS_SDK_VERSION})
+        set(MAXIMUM_MACOS_SDK_VERSION 15.4)
         set(ACCELERATE_NEW_LAPACK_VERSION 3.11.0)
     elseif (CMAKE_HOST_SYSTEM_VERSION VERSION_GREATER_EQUAL 22.4)
         # Mac OS X 13.3 Ventura or later
         message(STATUS "The MacOS version is: >=13.3,<15.0")
         set(MINIMUM_MACOS_SDK_VERSION 13.3)
-        set(VALID_MACOS_SDK_VERSIONS 14.5 14.4 14.2 14.0 ${MINIMUM_MACOS_SDK_VERSION})
+        set(MAXIMUM_MACOS_SDK_VERSION 14.5)
         set(ACCELERATE_NEW_LAPACK_VERSION 3.9.1)
     else ()
         # Before Mac OS X 13.3 Ventura
@@ -69,50 +69,45 @@ else ()
 endif ()
 
 if (NOT DEFINED CMAKE_OSX_SYSROOT OR CMAKE_OSX_SYSROOT STREQUAL "")
-    message(FATAL_ERROR "Please provide the CMAKE_OSX_SYSROOT location! See <https://cmake.org/cmake/help/latest/variable/CMAKE_OSX_SYSROOT.html>")
+    message(FATAL_ERROR "Please select a MacOS SDK by providing the CMAKE_OSX_SYSROOT path! See <https://cmake.org/cmake/help/latest/variable/CMAKE_OSX_SYSROOT.html>")
 endif ()
 
-string(REGEX MATCH [=[SDKs/MacOSX(.*)\.sdk$]=] _REGEX_DUMMY "${CMAKE_OSX_SYSROOT}")
-set(MAIN_MACOS_SDK_VERSION "${CMAKE_MATCH_1}")
+find_program(XCRUN_EXECUTABLE xcrun REQUIRED)
+
+set(ENV{SDKROOT} "${CMAKE_OSX_SYSROOT}")
+execute_process(
+    COMMAND "${XCRUN_EXECUTABLE}" --show-sdk-version
+    OUTPUT_VARIABLE SELECTED_MACOS_SDK_VERSION
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+message(STATUS "The selected MacOS SDK path is: ${CMAKE_OSX_SYSROOT}")
+message(STATUS "The selected MacOS SDK version is: ${SELECTED_MACOS_SDK_VERSION}")
 
 # The text-based .dylib stubs describing the Accelerate framework are provided
-# by the MacOS SDK, which has to match the MacOS system. Otherwise, there might
-# be newer symbols in the text-based .dylib stubs that are not provided by the
-# Accelerate binary, leading to linking errors.
-if (NOT DEFINED VALID_MACOS_SDK_VERSIONS)
-    # MacOS system supports the latest iteration of the new Accelerate
-    # BLAS/LAPACK. Use the default SDK, if it's recent enough.
-    if (MAIN_MACOS_SDK_VERSION VERSION_LESS MINIMUM_MACOS_SDK_VERSION)
-        message(STATUS "The MacOS SDK is: ${CMAKE_OSX_SYSROOT}")
+# by the MacOS SDK, which has to match the MacOS system. It could be too old for
+# the system, in which case it might be missing symbols that could actually be
+# provided by the Accelerate binary, or it could be too recent, in which case
+# there might be newer symbols in the text-based .dylib stubs that are not
+# provided by the Accelerate binary, leading to linking errors.
+if (SELECTED_MACOS_SDK_VERSION VERSION_LESS MINIMUM_MACOS_SDK_VERSION)
+    # SDK is too old!
+    message(STATUS "The minimum compatible MacOS SDK version is: ${MINIMUM_MACOS_SDK_VERSION}")
+    message(FATAL_ERROR "Please install and select a more recent XCode/Command Line Tools for a compatible MacOS SDK.")
+else ()
+    # SDK is not too old, but...
+    if (DEFINED MAXIMUM_MACOS_SDK_VERSION AND SELECTED_MACOS_SDK_VERSION VERSION_GREATER MAXIMUM_MACOS_SDK_VERSION)
+        # ...there is a maximum compatible MacOS SDK version, because the MacOS
+        # system is older and only supports one of the past iterations of the
+        # new Accelerate BLAS/LAPACK, and the selected SDK is too recent!
         message(STATUS "The minimum compatible MacOS SDK version is: ${MINIMUM_MACOS_SDK_VERSION}")
-        message(FATAL_ERROR "Please install a more recent XCode for a compatible MacOS SDK.")
-    endif ()
-elseif (NOT MAIN_MACOS_SDK_VERSION IN_LIST VALID_MACOS_SDK_VERSIONS)
-    # MacOS system supports one of the past iterations of the new Accelerate
-    # BLAS/LAPACK. If the latest possible XCode is installed on this older
-    # system, there might be a mismatch between the SDK and the system binary.
-    # Find a matching SDK from the Command Line Tools instead (which must be
-    # manually installed).
-    foreach (_MACOS_SDK_VERSION IN LISTS VALID_MACOS_SDK_VERSIONS)
-        find_path(VALID_MACOS_SDK NAMES "MacOSX${_MACOS_SDK_VERSION}.sdk" HINTS "/Library/Developer/CommandLineTools/SDKs" NO_CACHE)
-
-        if (VALID_MACOS_SDK)
-            set(VALID_MACOS_SDK "${VALID_MACOS_SDK}/MacOSX${_MACOS_SDK_VERSION}.sdk")
-            break ()
-        endif ()
-    endforeach ()
-
-    if (VALID_MACOS_SDK)
-        # Override CMAKE_OSX_SYSROOT with a local variable.
-        set(CMAKE_OSX_SYSROOT "${VALID_MACOS_SDK}")
-    else ()
-        message(STATUS "The MacOS SDK is: ${CMAKE_OSX_SYSROOT}")
-        message(STATUS "The compatible MacOS SDK versions are: ${VALID_MACOS_SDK_VERSIONS}")
-        message(FATAL_ERROR "Couldn't find a compatible MacOS SDK. Please install compatible XCode Command Line Tools.")
+        message(STATUS "The maximum compatible MacOS SDK version is: ${MAXIMUM_MACOS_SDK_VERSION}")
+        message(FATAL_ERROR "Please install and select a compatible MacOS SDK via XCode/Command Line Tools.")    
     endif ()
 endif ()
 
-message(STATUS "The MacOS SDK is: ${CMAKE_OSX_SYSROOT}")
+# The selected MacOS SDK's new Accelerate BLAS/LAPACK matches the MacOS system's
+# Accelerate binary.
 
 set(ENV{CMAKE_FRAMEWORK_PATH} "${CMAKE_OSX_SYSROOT}/System/Library/Frameworks")
 
