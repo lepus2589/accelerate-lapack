@@ -63,9 +63,9 @@ include the Accelerate C/C++ headers.
   - [The alias files (to use in other projects)](#the-alias-files-to-use-in-other-projects)
 - [How to compile](#how-to-compile)
   - [Prerequisites](#prerequisites)
+  - [MaxOS SDK Selection](#maxos-sdk-selection)
   - [Workflow with CMake](#workflow-with-cmake)
-    - [CMake v4 compatibility](#cmake-v4-compatibility)
-  - [Using Accelerate LAPACK in another project](#using-accelerate-lapack-in-another-project)
+  - [Using Accelerate LAPACK in another CMake project](#using-accelerate-lapack-in-another-cmake-project)
 
 ## The Problem ##
 
@@ -117,17 +117,20 @@ which are in turn attached to the BLAS::BLAS and LAPACK::LAPACK targets.
 
 ### The alias files (to use in other projects) ###
 
-After the CMake configuration, the alias files can be found in `./build/<32|64>/src`:
+After building and installing, the alias files can be found in
+`<install prefix>/share/cmake/AccelerateLAPACK-<version>`:
 
 ```plaintext
-./build/<32|64>/src
+share/cmake/AccelerateLAPACK-<version>
 ├── new-blas-ilp64.alias
 ├── new-blas.alias
 ├── new-lapack-ilp64.alias
 └── new-lapack.alias
 ```
 
-These files can be used to link any project against Accelerate!
+These files can be used to link any project against Accelerate! For CMake
+projects, you can just [import this
+project](#using-accelerate-lapack-in-another-cmake-project).
 
 ## How to compile ##
 
@@ -206,29 +209,43 @@ in your `CMakeUserPresets.json`. Both the `user-accelerate-lapack32` and
 
 ### Workflow with CMake ###
 
-Use the `accelerate-lapack32` preset (or the `accelerate-lapack64` preset for
-the ILP64 interface) with CMake (prefix all of the following commands with
-`xcrun`, see above):
+Use the `accelerate-lapack32-install` preset (or the
+`accelerate-lapack64-install` preset for the ILP64 interface) with CMake (prefix
+all of the following commands with `xcrun`, see above):
 
 ```shell
-$ cmake --workflow --preset accelerate-lapack32
+$ cmake --workflow --preset accelerate-lapack32-install
 ```
 
-This will configure Accelerate LAPACK to be installed in your `~/.local`
+This will configure and install Accelerate LAPACK in your `~/.local`
 directory by default. If you prefer a different install location (e.&nbsp;g.
 `/opt/custom`), you can change it using a `CMakeUserPresets.json` file, for
 which a template file is provided:
 
 ```shell
-$ cmake --workflow --preset user-accelerate-lapack32
+$ cmake --workflow --preset user-accelerate-lapack32-install
 ```
 
 I wouldn't recommend installing to `/usr/local` (used by Homebrew on Intel Macs)
 or `/opt/local` (used by MacPorts).
 
-### Using Accelerate LAPACK in another project ###
+If your install location is write protected, use the `accelerate-lapack32` and
+`accelerate-lapack64` workflow presets to configure and build the project only
+and then install with:
 
-You can use Accelerate LAPACK in other projects like this:
+```shell
+$ sudo cmake --build --preset user-accelerate-lapack32-install
+```
+
+and
+
+```shell
+$ sudo cmake --build --preset user-accelerate-lapack64-install
+```
+
+### Using Accelerate LAPACK in another CMake project ###
+
+You can use Accelerate LAPACK in other CMake projects like this:
 
 ```cmake
 include(FetchContent)

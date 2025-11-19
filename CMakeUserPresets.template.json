@@ -11,7 +11,7 @@
         "accelerate-lapack32"
       ],
       "cacheVariables": {
-        "CMAKE_INSTALL_PREFIX": "/opt/custom"
+        "CMAKE_INSTALL_PREFIX": "$env{HOME}/.local"
       },
       "displayName": "User LAPACK 32bit configuration linking against Accelerate"
     },
@@ -22,7 +22,7 @@
         "accelerate-lapack64"
       ],
       "cacheVariables": {
-        "CMAKE_INSTALL_PREFIX": "/opt/custom"
+        "CMAKE_INSTALL_PREFIX": "$env{HOME}/.local"
       },
       "displayName": "User LAPACK 64bit configuration linking against Accelerate ILP64 interface"
     }
@@ -33,22 +33,38 @@
       "inherits": [
         "accelerate-lapack32"
       ],
-      "displayName": "User LAPACK 32bit build linking against Accelerate and installation",
+      "displayName": "User LAPACK 32bit build linking against Accelerate",
       "configurePreset": "user-accelerate-lapack32"
+    },
+    {
+      "name": "user-accelerate-lapack32-install",
+      "inherits": [
+        "user-accelerate-lapack32",
+        "accelerate-lapack32-install"
+      ],
+      "displayName": "User LAPACK 32bit build linking against Accelerate and installation"
     },
     {
       "name": "user-accelerate-lapack64",
       "inherits": [
         "accelerate-lapack64"
       ],
-      "displayName": "User LAPACK 64bit build linking against Accelerate ILP64 interface and installation",
+      "displayName": "User LAPACK 64bit build linking against Accelerate ILP64 interface",
       "configurePreset": "user-accelerate-lapack64"
+    },
+    {
+      "name": "user-accelerate-lapack64-install",
+      "inherits": [
+        "user-accelerate-lapack64",
+        "accelerate-lapack64-install"
+      ],
+      "displayName": "User LAPACK 64bit build linking against Accelerate ILP64 interface and installation"
     }
   ],
   "workflowPresets": [
     {
       "name": "user-accelerate-lapack32",
-      "displayName": "User LAPACK 32bit build linking against Accelerate and installation",
+      "displayName": "User LAPACK 32bit build linking against Accelerate",
       "steps": [
         {
           "type": "configure",
@@ -61,8 +77,22 @@
       ]
     },
     {
+      "name": "user-accelerate-lapack32-install",
+      "displayName": "User LAPACK 32bit build linking against Accelerate and installation",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "user-accelerate-lapack32"
+        },
+        {
+          "type": "build",
+          "name": "user-accelerate-lapack32-install"
+        }
+      ]
+    },
+    {
       "name": "user-accelerate-lapack64",
-      "displayName": "User LAPACK 64bit build linking against Accelerate ILP64 interface and installation",
+      "displayName": "User LAPACK 64bit build linking against Accelerate ILP64 interface",
       "steps": [
         {
           "type": "configure",
@@ -71,6 +101,20 @@
         {
           "type": "build",
           "name": "user-accelerate-lapack64"
+        }
+      ]
+    },
+    {
+      "name": "user-accelerate-lapack64-install",
+      "displayName": "User LAPACK 64bit build linking against Accelerate ILP64 interface and installation",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "user-accelerate-lapack64"
+        },
+        {
+          "type": "build",
+          "name": "user-accelerate-lapack64-install"
         }
       ]
     }
