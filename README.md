@@ -43,7 +43,7 @@ Accelerate framework to be compatible with [Reference LAPACK
 v3.12.0][lapack-v3.12.0]. Unfortunately, there is no mention of it in the [MacOS
 15.5 Sequoia Release Notes][macos15.5-release-notes], but the note in the
 [Accelerate BLAS docs][accelerate-docs] has been updated accordingly, even
-though it erroneously says, v3.12.0 will be supported with MacOS 16.
+though it erroneously says, v3.12.0 will be supported with MacOS 26.
 
 These new interfaces are hidden behind the preprocessor defines
 `ACCELERATE_NEW_LAPACK` and `ACCELERATE_LAPACK_ILP64` and they only work, if you
@@ -66,6 +66,8 @@ include the Accelerate C/C++ headers.
   - [MaxOS SDK Selection](#maxos-sdk-selection)
   - [Workflow with CMake](#workflow-with-cmake)
   - [Using Accelerate LAPACK in another CMake project](#using-accelerate-lapack-in-another-cmake-project)
+    - [Input variables](#input-variables)
+    - [Output variables and targets](#output-variables-and-targets)
 
 ## The Problem ##
 
@@ -245,24 +247,29 @@ $ sudo cmake --build --preset user-accelerate-lapack64-install
 
 ### Using Accelerate LAPACK in another CMake project ###
 
-You can use Accelerate LAPACK in other CMake projects like this:
+You can use Accelerate LAPACK in other CMake projects as a drop-in replacement
+for `FindLAPACK` like this:
 
 ```cmake
-include(FetchContent)
+if (CMAKE_HOST_SYSTEM_NAME MATCHES "Darwin" AND BLA_VENDOR STREQUAL "Apple")
+    include(FetchContent)
 
-FetchContent_Declare(
-    AccelerateLAPACK
-    GIT_REPOSITORY "https://github.com/lepus2589/accelerate-lapack.git"
-    GIT_TAG v1.6.0
-    SYSTEM
-    FIND_PACKAGE_ARGS 1.6.0 CONFIG NAMES AccelerateLAPACK
-)
-set(AccelerateLAPACK_INCLUDE_PACKAGING TRUE)
-FetchContent_MakeAvailable(AccelerateLAPACK)
+    FetchContent_Declare(
+        AccelerateLAPACK
+        GIT_REPOSITORY "https://github.com/lepus2589/accelerate-lapack.git"
+        GIT_TAG v1.6.0
+        SYSTEM
+        FIND_PACKAGE_ARGS 1.6.0 CONFIG NAMES AccelerateLAPACK
+    )
+    set(AccelerateLAPACK_INCLUDE_PACKAGING TRUE)
+    FetchContent_MakeAvailable(AccelerateLAPACK)
+else ()
+    find_package(LAPACK MODULE)
+endif ()
 ```
 
-and providing the above install location via the `CMAKE_PREFIX_PATH` variable
-from the command line:
+and optionally providing the above install location via the `CMAKE_PREFIX_PATH`
+variable from the command line:
 
 ```shell
 $ cmake -S . -B ./build -D "CMAKE_PREFIX_PATH=~/.local"
@@ -270,3 +277,44 @@ $ cmake -S . -B ./build -D "CMAKE_PREFIX_PATH=~/.local"
 
 This makes the modified BLAS::BLAS and LAPACK::LAPACK targets available in the
 other project's `CMakeLists.txt`.
+
+#### Input variables ####
+
+- `BLA_SIZEOF_INTEGER`: This is the same variable name that is used in the
+  `FindBLAS` and `FindLAPACK` modules and selects the 32 bit or 64 bit
+  interface, respectively.
+
+#### Output variables and targets ####
+
+- `BLAS::NEW_BLAS` target: This target links against the 32 bit interface of
+  Accelerate's NewBLAS interface.
+- `BLAS::NEW_BLAS64` target: This target links against the 64 bit interface of
+  Accelerate's NewBLAS interface.
+- `LAPACK::NEW_LAPACK` target: This target links against the 32 bit interface of
+  Accelerate's NewLAPACK interface.
+- `LAPACK::NEW_LAPACK64` target: This target links against the 64 bit interface of
+  Accelerate's NewLAPACK interface.
+- `BLAS::BLAS` target, interface depends on `BLA_SIZEOF_INTEGER`
+- `LAPACK::LAPACK` target, interface depends on `BLA_SIZEOF_INTEGER`
+
+- `ACCELERATE_LAPACK_ILAVER_VERSION`: Accelerate's LAPACK version
+- `BLAS32_LIBRARIES`: link libraries for Accelerate's NewBLAS 32 bit interface
+- `BLAS32_LINKER_FLAGS`: link flags for Accelerate's NewBLAS 32 bit interface
+- `BLAS64_LIBRARIES`: link libraries for Accelerate's NewBLAS 64 bit interface
+- `BLAS64_LINKER_FLAGS`: link flags for Accelerate's NewBLAS 64 bit interface
+- `BLAS_LIBRARIES`: patched link libraries for Accelerate's NewBLAS interface
+  depending on `BLA_SIZEOF_INTEGER`
+- `BLAS_LINKER_FLAGS`: patched link flags for Accelerate's NewBLAS interface
+  depending on `BLA_SIZEOF_INTEGER`
+- `LAPACK32_LIBRARIES`: link libraries for Accelerate's NewLAPACK 32 bit
+  interface
+- `LAPACK32_LINKER_FLAGS`: link flags for Accelerate's NewLAPACK 32 bit
+  interface
+- `LAPACK64_LIBRARIES`: link libraries for Accelerate's NewLAPACK 64 bit
+  interface
+- `LAPACK64_LINKER_FLAGS`: link flags for Accelerate's NewLAPACK 64 bit
+  interface
+- `LAPACK_LIBRARIES`: patched link libraries for Accelerate's NewLAPACK
+  interface depending on `BLA_SIZEOF_INTEGER`
+- `LAPACK_LINKER_FLAGS`: patched link flags for Accelerate's NewLAPACK interface
+  depending on `BLA_SIZEOF_INTEGER`

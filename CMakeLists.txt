@@ -23,7 +23,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ]]
 
-set(CMAKE_MAXIMUM_SUPPORTED_VERSION 4.0)
+set(CMAKE_MAXIMUM_SUPPORTED_VERSION 4.1)
 
 cmake_minimum_required(VERSION 3.12...${CMAKE_MAXIMUM_SUPPORTED_VERSION})
 
@@ -33,9 +33,39 @@ string(COMPARE EQUAL "${CMAKE_PROJECT_NAME}" "${PROJECT_NAME}" IS_TOP_LEVEL)
 
 option(AccelerateLAPACK_INCLUDE_PACKAGING "Include packaging rules for AccelerateLAPACK" "${IS_TOP_LEVEL}")
 
-option(BUILD_INDEX64 "Link to ILP64 version of LAPACK?" OFF)
+if (NOT IS_TOP_LEVEL)
+    # Check if BLAS was already searched in the parent project
+    if (BLAS_FOUND)
+        if (NOT BLAS_Accelerate_LIBRARY)
+            message(STATUS "BLAS is provided by a different distribution than Accelerate.")
+            return()
+        endif ()
+    else ()
+        if (DEFINED BLA_VENDOR AND NOT BLA_VENDOR STREQUAL "Apple")
+            message(WARNING "BLAS by vendor \"${BLA_VENDOR}\" is requested, but will be overridden to vendor \"Apple\" to search for Accelerate.")
+        endif ()
+    endif ()
 
-message(STATUS "Trying to link to ILP64 interface of LAPACK: ${BUILD_INDEX64}")
+    # Check if LAPACK was already searched in the parent project
+    if (LAPACK_FOUND)
+        if (NOT LAPACK_Accelerate_LIBRARY)
+            message(STATUS "LAPACK is provided by a different distribution than Accelerate.")
+            return()
+        endif ()
+    else ()
+        if (DEFINED BLA_VENDOR AND NOT BLA_VENDOR STREQUAL "Apple")
+            message(WARNING "LAPACK by vendor \"${BLA_VENDOR}\" is requested, but will be overridden to vendor \"Apple\" to search for Accelerate.")
+        endif ()
+    endif ()
+endif ()
+
+if (BLA_SIZEOF_INTEGER EQUAL 8)
+    set(BUILD_INDEX64 ON)
+else ()
+    set(BUILD_INDEX64 OFF)
+endif ()
+
+message(STATUS "Trying to find ILP64 interface of Accelerate's BLAS/LAPACK: ${BUILD_INDEX64}")
 
 if (CMAKE_HOST_SYSTEM_NAME MATCHES "Darwin")
     # The available binary Accelerate version is determined by the MacOS system
@@ -112,12 +142,22 @@ endif ()
 set(ENV{CMAKE_FRAMEWORK_PATH} "${CMAKE_OSX_SYSROOT}/System/Library/Frameworks")
 
 set(BLA_VENDOR "Apple")
-# BLAS::BLAS and LAPACK::LAPACK targets need to be global to be used in try_compile()
-find_package(LAPACK MODULE GLOBAL)
+set(BLA_SIZEOF_INTEGER_BACKUP "${BLA_SIZEOF_INTEGER}")
+set(BLA_SIZEOF_INTEGER "ANY")
 
+# BLAS::BLAS and LAPACK::LAPACK targets need to be global to be available in the
+# parent project
+if (NOT BLAS_FOUND)
+    find_package(BLAS MODULE GLOBAL)
+endif ()
+if (NOT LAPACK_FOUND)
+    find_package(LAPACK MODULE GLOBAL)
+endif ()
+
+set(BLA_SIZEOF_INTEGER "${BLA_SIZEOF_INTEGER_BACKUP}")
 unset(ENV{CMAKE_FRAMEWORK_PATH})
 
-if (NOT LAPACK_FOUND OR NOT LAPACK_Accelerate_LIBRARY)
+if (NOT BLAS_FOUND OR NOT BLAS_Accelerate_LIBRARY OR NOT LAPACK_FOUND OR NOT LAPACK_Accelerate_LIBRARY)
     message(FATAL_ERROR "Couldn't find Accelerate framework in MacOS SDK!")
 endif ()
 
@@ -125,4 +165,27 @@ add_subdirectory(src)
 
 if (AccelerateLAPACK_INCLUDE_PACKAGING)
     add_subdirectory(packaging)
+endif ()
+
+if (NOT IS_TOP_LEVEL)
+    # Export the API variables into the parent project
+    set(ACCELERATE_LAPACK_ILAVER_VERSION "${ACCELERATE_LAPACK_ILAVER_VERSION}" PARENT_SCOPE)
+
+    set(BLAS_FOUND "${BLAS_FOUND}" PARENT_SCOPE)
+    set(BLAS_LIBRARIES "${BLAS_LIBRARIES}" PARENT_SCOPE)
+    set(BLAS_LINKER_FLAGS "${BLAS_LINKER_FLAGS}" PARENT_SCOPE)
+
+    set(BLAS32_LIBRARIES "${BLAS32_LIBRARIES}" PARENT_SCOPE)
+    set(BLAS32_LINKER_FLAGS "${BLAS32_LINKER_FLAGS}" PARENT_SCOPE)
+    set(BLAS64_LIBRARIES "${BLAS64_LIBRARIES}" PARENT_SCOPE)
+    set(BLAS64_LINKER_FLAGS "${BLAS64_LINKER_FLAGS}" PARENT_SCOPE)
+
+    set(LAPACK_FOUND "${LAPACK_FOUND}" PARENT_SCOPE)
+    set(LAPACK_LIBRARIES "${LAPACK_LIBRARIES}" PARENT_SCOPE)
+    set(LAPACK_LINKER_FLAGS "${LAPACK_LINKER_FLAGS}" PARENT_SCOPE)
+
+    set(LAPACK32_LIBRARIES "${LAPACK32_LIBRARIES}" PARENT_SCOPE)
+    set(LAPACK32_LINKER_FLAGS "${LAPACK32_LINKER_FLAGS}" PARENT_SCOPE)
+    set(LAPACK64_LIBRARIES "${LAPACK64_LIBRARIES}" PARENT_SCOPE)
+    set(LAPACK64_LINKER_FLAGS "${LAPACK64_LINKER_FLAGS}" PARENT_SCOPE)
 endif ()
