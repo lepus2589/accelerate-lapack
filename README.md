@@ -257,9 +257,9 @@ if (CMAKE_HOST_SYSTEM_NAME MATCHES "Darwin" AND BLA_VENDOR STREQUAL "Apple")
     FetchContent_Declare(
         AccelerateLAPACK
         GIT_REPOSITORY "https://github.com/lepus2589/accelerate-lapack.git"
-        GIT_TAG v1.6.0
+        GIT_TAG v2.0.0
         SYSTEM
-        FIND_PACKAGE_ARGS 1.6.0 CONFIG NAMES AccelerateLAPACK
+        FIND_PACKAGE_ARGS 2.0.0 CONFIG NAMES AccelerateLAPACK
     )
     set(AccelerateLAPACK_INCLUDE_PACKAGING TRUE)
     FetchContent_MakeAvailable(AccelerateLAPACK)
