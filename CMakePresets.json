@@ -30,7 +30,7 @@
       ],
       "binaryDir": "${sourceDir}/build/32",
       "cacheVariables": {
-        "BUILD_INDEX64": false
+        "BLA_SIZEOF_INTEGER": "4"
       },
       "displayName": "LAPACK 32bit configuration linking against Accelerate"
     },
@@ -41,7 +41,7 @@
       ],
       "binaryDir": "${sourceDir}/build/64",
       "cacheVariables": {
-        "BUILD_INDEX64": true
+        "BLA_SIZEOF_INTEGER": "8"
       },
       "displayName": "LAPACK 64bit configuration linking against Accelerate ILP64 interface"
     }

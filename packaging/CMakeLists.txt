@@ -37,54 +37,62 @@ if (NOT DEFINED AccelerateLAPACK_INSTALL_CMAKEDIR)
     )
 endif ()
 
-# Add the $NEWLAPACK symbols to the linker flags of the NEW_BLAS and NEW_LAPACK
-# targets
-target_link_options(
-    NEW_BLAS
-    INTERFACE
-    ${BLAS_LINKER_FLAGS}
+list(
+    APPEND BLAS32_LINKER_FLAGS
     "$<INSTALL_INTERFACE:LINKER:-alias_list,${AccelerateLAPACK_FULL_INSTALL_CMAKEDIR}/new-blas.alias>"
 )
-target_link_options(
-    NEW_LAPACK
-    INTERFACE
-    ${LAPACK_LINKER_FLAGS}
-    "$<INSTALL_INTERFACE:LINKER:-alias_list,${AccelerateLAPACK_FULL_INSTALL_CMAKEDIR}/new-lapack.alias>"
-)
-
-# Add the $NEWLAPACK$ILP64 symbols to the linker flags of the NEW_BLAS64 and
-# NEW_LAPACK64 targets
-target_link_options(
-    NEW_BLAS64
-    INTERFACE
-    ${BLAS_LINKER_FLAGS}
+list(
+    APPEND BLAS64_LINKER_FLAGS
     "$<INSTALL_INTERFACE:LINKER:-alias_list,${AccelerateLAPACK_FULL_INSTALL_CMAKEDIR}/new-blas-ilp64.alias>"
 )
-target_link_options(
-    NEW_LAPACK64
-    INTERFACE
-    ${LAPACK_LINKER_FLAGS}
+
+list(
+    APPEND LAPACK32_LINKER_FLAGS
+    "$<INSTALL_INTERFACE:LINKER:-alias_list,${AccelerateLAPACK_FULL_INSTALL_CMAKEDIR}/new-blas.alias>"
+    "$<INSTALL_INTERFACE:LINKER:-alias_list,${AccelerateLAPACK_FULL_INSTALL_CMAKEDIR}/new-lapack.alias>"
+)
+list(
+    APPEND LAPACK64_LINKER_FLAGS
+    "$<INSTALL_INTERFACE:LINKER:-alias_list,${AccelerateLAPACK_FULL_INSTALL_CMAKEDIR}/new-blas-ilp64.alias>"
     "$<INSTALL_INTERFACE:LINKER:-alias_list,${AccelerateLAPACK_FULL_INSTALL_CMAKEDIR}/new-lapack-ilp64.alias>"
 )
 
+if (BUILD_INDEX64)
+    set(BLAS_LINKER_FLAGS ${BLAS64_LINKER_FLAGS})
+    set(LAPACK_LINKER_FLAGS ${LAPACK64_LINKER_FLAGS})
+else ()
+    set(BLAS_LINKER_FLAGS ${BLAS32_LINKER_FLAGS})
+    set(LAPACK_LINKER_FLAGS ${LAPACK32_LINKER_FLAGS})
+endif ()
+
+# Add the $NEWLAPACK symbols to the linker flags of the NEW_BLAS and NEW_LAPACK
+# targets
+target_link_options(NEW_BLAS INTERFACE ${BLAS32_LINKER_FLAGS})
+target_link_options(NEW_LAPACK INTERFACE ${LAPACK32_LINKER_FLAGS})
+
+# Add the $NEWLAPACK$ILP64 symbols to the linker flags of the NEW_BLAS64 and
+# NEW_LAPACK64 targets
+target_link_options(NEW_BLAS64 INTERFACE ${BLAS64_LINKER_FLAGS})
+target_link_options(NEW_LAPACK64 INTERFACE ${LAPACK64_LINKER_FLAGS})
+
 install(
     TARGETS NEW_BLAS NEW_BLAS64
-    EXPORT NewBLAS_Targets
+    EXPORT NEW_BLAS_Targets
 )
 
 install(
-    EXPORT NewBLAS_Targets
+    EXPORT NEW_BLAS_Targets
     DESTINATION "${AccelerateLAPACK_INSTALL_CMAKEDIR}"
     NAMESPACE BLAS::
 )
 
 install(
     TARGETS NEW_LAPACK NEW_LAPACK64
-    EXPORT NewLAPACK_Targets
+    EXPORT NEW_LAPACK_Targets
 )
 
 install(
-    EXPORT NewLAPACK_Targets
+    EXPORT NEW_LAPACK_Targets
     DESTINATION "${AccelerateLAPACK_INSTALL_CMAKEDIR}"
     NAMESPACE LAPACK::
 )
@@ -113,8 +121,16 @@ install(
     "${CMAKE_CURRENT_BINARY_DIR}/AccelerateLAPACKConfigVersion.cmake"
     "${CMAKE_CURRENT_BINARY_DIR}/AccelerateLAPACKConfig.cmake"
     "${CMAKE_CURRENT_BINARY_DIR}/../src/new-blas.alias"
-    "${CMAKE_CURRENT_BINARY_DIR}/../src/new-blas-ilp64.alias"
     "${CMAKE_CURRENT_BINARY_DIR}/../src/new-lapack.alias"
+    "${CMAKE_CURRENT_BINARY_DIR}/../src/new-blas-ilp64.alias"
     "${CMAKE_CURRENT_BINARY_DIR}/../src/new-lapack-ilp64.alias"
     DESTINATION "${AccelerateLAPACK_INSTALL_CMAKEDIR}"
 )
+
+set(BLAS_LINKER_FLAGS "${BLAS_LINKER_FLAGS}" PARENT_SCOPE)
+set(BLAS32_LINKER_FLAGS "${BLAS32_LINKER_FLAGS}" PARENT_SCOPE)
+set(BLAS64_LINKER_FLAGS "${BLAS64_LINKER_FLAGS}" PARENT_SCOPE)
+
+set(LAPACK_LINKER_FLAGS "${LAPACK_LINKER_FLAGS}" PARENT_SCOPE)
+set(LAPACK32_LINKER_FLAGS "${LAPACK32_LINKER_FLAGS}" PARENT_SCOPE)
+set(LAPACK64_LINKER_FLAGS "${LAPACK64_LINKER_FLAGS}" PARENT_SCOPE)

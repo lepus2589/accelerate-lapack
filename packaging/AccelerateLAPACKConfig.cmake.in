@@ -27,36 +27,82 @@ SOFTWARE.
 
 cmake_minimum_required(VERSION @CMAKE_MINIMUM_REQUIRED_VERSION@...@CMAKE_MAXIMUM_SUPPORTED_VERSION@)
 
-include("@PACKAGE_AccelerateLAPACK_INSTALL_CMAKEDIR@/NewBLAS_Targets.cmake")
-include("@PACKAGE_AccelerateLAPACK_INSTALL_CMAKEDIR@/NewLAPACK_Targets.cmake")
+# Check if BLAS was already searched in the parent project
+if (BLAS_FOUND)
+    if (NOT BLAS_Accelerate_LIBRARY)
+        message(STATUS "BLAS is provided by a different distribution than Accelerate.")
+        return()
+    endif ()
+else ()
+    if (DEFINED BLA_VENDOR AND NOT BLA_VENDOR STREQUAL "Apple")
+        message(WARNING "BLAS by vendor \"${BLA_VENDOR}\" is requested, but Accelerate will be provided.")
+    endif ()
+endif ()
+
+# Check if LAPACK was already searched in the parent project
+if (LAPACK_FOUND)
+    if (NOT LAPACK_Accelerate_LIBRARY)
+        message(STATUS "LAPACK is provided by a different distribution than Accelerate.")
+        return()
+    endif ()
+else ()
+    if (DEFINED BLA_VENDOR AND NOT BLA_VENDOR STREQUAL "Apple")
+        message(WARNING "LAPACK by vendor \"${BLA_VENDOR}\" is requested, but Accelerate will be provided.")
+    endif ()
+endif ()
+
+include("@PACKAGE_AccelerateLAPACK_INSTALL_CMAKEDIR@/NEW_BLAS_Targets.cmake")
+include("@PACKAGE_AccelerateLAPACK_INSTALL_CMAKEDIR@/NEW_LAPACK_Targets.cmake")
+
+set(ACCELERATE_LAPACK_ILAVER_VERSION "@ACCELERATE_LAPACK_ILAVER_VERSION@")
 
 set_target_properties(
     BLAS::NEW_BLAS
     LAPACK::NEW_LAPACK
-    PROPERTIES
-    VERSION "@ACCELERATE_LAPACK_ILAVER_VERSION@"
-)
-
-set_target_properties(
     BLAS::NEW_BLAS64
     LAPACK::NEW_LAPACK64
     PROPERTIES
-    VERSION "@ACCELERATE_LAPACK_ILAVER64_VERSION@"
+    VERSION "${ACCELERATE_LAPACK_ILAVER_VERSION}"
 )
 
-# These targets are imported targets, no matter if you import the project via
-# add_subdirectory() or find_package(). They can be used for try_compile()
-add_library(BLAS::NEW_BLAS_IMPORTED ALIAS BLAS::NEW_BLAS)
-add_library(BLAS::NEW_BLAS64_IMPORTED ALIAS BLAS::NEW_BLAS64)
-add_library(LAPACK::NEW_LAPACK_IMPORTED ALIAS LAPACK::NEW_LAPACK)
-add_library(LAPACK::NEW_LAPACK64_IMPORTED ALIAS LAPACK::NEW_LAPACK64)
+get_target_property(BLAS32_LIBRARIES BLAS::NEW_BLAS INTERFACE_LINK_LIBRARIES)
+get_target_property(BLAS32_LINKER_FLAGS BLAS::NEW_BLAS INTERFACE_LINK_OPTIONS)
+get_target_property(BLAS64_LIBRARIES BLAS::NEW_BLAS64 INTERFACE_LINK_LIBRARIES)
+get_target_property(BLAS64_LINKER_FLAGS BLAS::NEW_BLAS64 INTERFACE_LINK_OPTIONS)
 
-if (BUILD_INDEX64)
-    add_library(BLAS::BLAS ALIAS BLAS::NEW_BLAS64)
-    add_library(LAPACK::LAPACK ALIAS LAPACK::NEW_LAPACK64)
+get_target_property(LAPACK32_LIBRARIES LAPACK::NEW_LAPACK INTERFACE_LINK_LIBRARIES)
+get_target_property(LAPACK32_LINKER_FLAGS LAPACK::NEW_LAPACK INTERFACE_LINK_OPTIONS)
+get_target_property(LAPACK64_LIBRARIES LAPACK::NEW_LAPACK64 INTERFACE_LINK_LIBRARIES)
+get_target_property(LAPACK64_LINKER_FLAGS LAPACK::NEW_LAPACK64 INTERFACE_LINK_OPTIONS)
+
+if (BLA_SIZEOF_INTEGER EQUAL 8)
+    set(BLAS_LIBRARIES ${BLAS64_LIBRARIES})
+    set(BLAS_LINKER_FLAGS ${BLAS64_LINKER_FLAGS})
 else ()
-    add_library(BLAS::BLAS ALIAS BLAS::NEW_BLAS)
-    add_library(LAPACK::LAPACK ALIAS LAPACK::NEW_LAPACK)
+    set(BLAS_LIBRARIES ${BLAS32_LIBRARIES})
+    set(BLAS_LINKER_FLAGS ${BLAS32_LINKER_FLAGS})
 endif ()
+
+if (NOT TARGET BLAS::BLAS)
+    add_library(BLAS::BLAS INTERFACE IMPORTED)
+endif ()
+
+set_target_properties(BLAS::BLAS PROPERTIES INTERFACE_LINK_LIBRARIES "${BLAS_LIBRARIES}")
+set_target_properties(BLAS::BLAS PROPERTIES INTERFACE_LINK_OPTIONS "${BLAS_LINKER_FLAGS}")
+
+if (BLA_SIZEOF_INTEGER EQUAL 8)
+    set(LAPACK_LIBRARIES ${LAPACK64_LIBRARIES})
+    set(LAPACK_LINKER_FLAGS ${LAPACK64_LINKER_FLAGS})
+else ()
+    set(LAPACK_LIBRARIES ${LAPACK32_LIBRARIES})
+    set(LAPACK_LINKER_FLAGS ${LAPACK32_LINKER_FLAGS})
+endif ()
+
+if (NOT TARGET LAPACK::LAPACK)
+    add_library(LAPACK::LAPACK INTERFACE IMPORTED)
+endif ()
+
+set_target_properties(LAPACK::LAPACK PROPERTIES INTERFACE_LINK_LIBRARIES "${LAPACK_LIBRARIES}")
+set_target_properties(LAPACK::LAPACK PROPERTIES INTERFACE_LINK_OPTIONS "${LAPACK_LINKER_FLAGS}")
 
 check_required_components(AccelerateLAPACK)
